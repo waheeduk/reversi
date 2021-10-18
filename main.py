@@ -4,7 +4,7 @@ import sys
 ###A SIMPLE REVERSI GAME CREATED IN PYGAME ###
 
 tile_size = 64 #size of individual grid piece
-turn = 1 #if turn is odd, black plays, else, white plays, black starts
+turn = 1 #if turn is odd, BLACK plays, else, WHITE plays, BLACK starts
 no_move_turns = 0
 
 #values for checking up down left right, and combinations in between
@@ -31,9 +31,10 @@ for x in range(0, 8):
     for y in range(0, 8):
         all_possible.append(((x*tile_size), (y*tile_size)))
 
-#colours for the pieces
-black = (0,0,0)
-white = (255, 255, 255)
+#colours for the pieces and background
+BLACK = (0,0,0)
+WHITE = (255, 255, 255)
+GREY = (128, 128, 128)
 
 def pos_to_tile(pos):
     """converts a mouse coordinates to the coordinates of the tile that it clicked in"""
@@ -41,8 +42,14 @@ def pos_to_tile(pos):
     y = (pos[1] // tile_size) * tile_size
     return (x, y)
 
+def basic_coords(pos):
+    """returns coordinates based on reversi board grid rather than pixel coordinates"""
+    x = pos[0]/tile_size
+    y = pos[1]/tile_size
+    return (x, y)
+
 def valid_moves_available():
-    """vchecks how many valid remaining moves are possible"""
+    """checks how many valid remaining moves are possible"""
     valid_moves = 0
     valid_move_list = []
     for n in range(0, len(enemy_piece)):
@@ -60,8 +67,6 @@ def valid_moves_available():
     if valid_moves == 0:
         return False
     else:
-        print(f'for the turn {turn}, there are {valid_moves} moves available\n')
-        print(valid_move_list)
         return True
 
 def check_valid(position):
@@ -80,6 +85,81 @@ def check_valid(position):
         print('invalid move')
     else:
         return True
+    
+def basic_check(position):
+    hits = 8
+    if position in enemy_piece or position in current_piece:
+        return False
+    for n in range(0, len(directions)):
+        if ((position[0] + directions[n][0]), (position[1] + directions[n][1])) in enemy_piece:
+            return True
+        else:
+            hits -= 1
+    if hits == 0:
+        return False
+    
+def list_valid_moves():
+    """returns a list of all the valid moves possible"""
+    valid_move_list = [ ]
+    for n in range(0, len(enemy_piece)):
+        for x in range(0, len(directions)):
+            checking_piece = ((enemy_piece[n][0] + directions[x][0]), (enemy_piece[n][1] + directions[x][1]))
+            if checking_piece in enemy_piece or checking_piece in current_piece:
+                continue
+            if checking_piece[0] > (7*tile_size) or checking_piece[0] < 0:
+                continue
+            if checking_piece[1] < 0 or checking_piece[1] > (7*tile_size):
+                continue
+            else:
+                valid_move_list.append(checking_piece)
+    return valid_move_list
+
+def score_move(position, adjacent, score):
+    """scores a move based on how many tiles it captures, as moves are only 
+    checked if we know they're valid, score always starts at 1"""
+    interval = (adjacent[0] - position[0], adjacent[1] - position[1])
+    check_piece = (adjacent[0] + interval[0], adjacent[1] + interval[1])
+    if adjacent[0]  < 0 or adjacent[0] > (8*tile_size):
+        print('out of bounds 1')
+        print(adjacent)
+        return 0
+    elif adjacent[1] < 0 or adjacent[1] > (8*tile_size):
+        print('out of bounds 2')
+        print(adjacent)
+        return 0
+    elif adjacent not in enemy_piece and adjacent not in current_piece:
+        return 0
+    elif adjacent in enemy_piece:
+        return score_move(adjacent, check_piece, score + 1)
+    elif adjacent in current_piece:
+        return score
+
+def highest_scoring_move():
+    """finds the highest scoring move"""
+    moves = list_valid_moves()
+    moves_scores= {}
+    for n in range(0, len(moves)):
+        moves_scores[moves[n]] = move_total_score(moves[n])
+    for k, l in moves_scores.items():
+        if l > 0:
+            print(basic_coords(k), l)
+    return moves_scores
+
+def move_total_score(position):
+    score = 0
+    for j in range(0, len(directions)):
+        adjacent = (position[0] + directions[j][0], position[1] + directions[j][1])
+        score += score_move(position, adjacent, 0)
+    return score
+
+def play_best_move(move_options):
+    move_score = 0
+    move_pos = (0, 0)
+    for i, j in move_options:
+        if j > move_score:
+            move_score = j
+            move_pos = i
+    return i
 
 def flip(position, adjacent):
     """finds the furthest position on grid up to which the player has captured enemy pieces"""
@@ -102,12 +182,13 @@ def flip_back(start, interval):
 		enemy_piece.remove((start[0], start[1]))
 		current_piece.append((start[0], start[1]))
 		return flip_back((start[0] + interval[0], start[1] + interval[1]), interval)
-
+    
 def result():
-    if len(black_occupied) > len(white_occupied):
-        print(f'black won with {len(black_occupied)} pieces to white\'s {len(white_occupied)} pieces')
-    elif len(white_occupied) > len(black_occupied):
-        print(f'white won with {len(white_occupied)} pieces to black\'s {len(black_occupied)} pieces')
+    """checks which player won"""
+    if len(BLACK_occupied) > len(WHITE_occupied):
+        print(f'BLACK won with {len(BLACK_occupied)} pieces to WHITE\'s {len(WHITE_occupied)} pieces')
+    elif len(WHITE_occupied) > len(BLACK_occupied):
+        print(f'WHITE won with {len(WHITE_occupied)} pieces to BLACK\'s {len(BLACK_occupied)} pieces')
     else:
         print('it\'s a draw')
 
@@ -115,25 +196,25 @@ def result():
 pygame.init()
 screen=pygame.display.set_mode((8*tile_size,8*tile_size))
 pygame.display.set_caption('Reversi')
-screen.fill((50,255,255))
-#starting position of black and white pieces in reversi
+screen.fill(GREY)
+#starting position of BLACK and WHITE pieces in reversi
 starting_pos = [(3 * tile_size,3*tile_size), (4*tile_size,4*tile_size),\
     (3*tile_size,4*tile_size), (4*tile_size,3*tile_size)]
-#lists with all the positions occupied by either black or white tiles
-black_occupied = [ ]
-white_occupied = [ ]
-current_piece = black_occupied
-enemy_piece = white_occupied
+#lists with all the positions occupied by either BLACK or WHITE tiles
+BLACK_occupied = [ ]
+WHITE_occupied = [ ]
+current_piece = BLACK_occupied
+enemy_piece = WHITE_occupied
 #starting positions
 for n in range(0, 4):
     if n < 2:
-        black_occupied.append(starting_pos[n])
+        BLACK_occupied.append(starting_pos[n])
     else:
-        white_occupied.append(starting_pos[n])
+        WHITE_occupied.append(starting_pos[n])
 #draws the grid onto which the game is played
 for n in range(0, 8):
-    pygame.draw.line(screen, black, (n*tile_size, 0), (n*tile_size, tile_size*8))
-    pygame.draw.line(screen, black, (0, n*tile_size), (8*tile_size, n*tile_size))
+    pygame.draw.line(screen, BLACK, (n*tile_size, 0), (n*tile_size, tile_size*8))
+    pygame.draw.line(screen, BLACK, (0, n*tile_size), (8*tile_size, n*tile_size))
 ### ------- MAIN GAME LOOP -------- ###
 while True:
     for event in pygame.event.get():
@@ -146,23 +227,32 @@ while True:
             no_move_turns += 1
             turn += 1
             print('no valid moves')
-        else:
-            print('valid moves')
-        if event.type==pygame.MOUSEBUTTONUP:
-            mouse_pos = pygame.mouse.get_pos()
-            tile_pos = pos_to_tile(mouse_pos)
-            if check_valid(tile_pos) == True:
-                current_piece.append(tile_pos)
-                turn += 1
-                if turn % 2 == 1:
-                    current_piece = black_occupied
-                    enemy_piece = white_occupied
-                else:
-                    current_piece = white_occupied
-                    enemy_piece = black_occupied
-                no_move_turns = 0
-    for n in range(0, len(black_occupied)): #draws black pieces
-        pygame.draw.circle(screen, black, ((black_occupied[n][0] + 32), black_occupied[n][1] + 32), 25 )
-    for n in range(0, len(white_occupied)): #draws white pieces
-        pygame.draw.circle(screen, white, ((white_occupied[n][0] + 32), white_occupied[n][1] + 32), 25 )
+        # else:
+        #     print('valid moves')
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_e:
+                print('button pressed')
+                highest_scoring_move()
+        if event.type==pygame.MOUSEBUTTONDOWN:
+            if event.button == 3: # right click
+                mouse_pos = pygame.mouse.get_pos()
+                tile_pos = pos_to_tile(mouse_pos)
+                print(move_total_score(tile_pos))
+            elif event.button == 1:
+                mouse_pos = pygame.mouse.get_pos()
+                tile_pos = pos_to_tile(mouse_pos)
+                if check_valid(tile_pos) == True:
+                    current_piece.append(tile_pos)
+                    turn += 1
+                    if turn % 2 == 1:
+                        current_piece = BLACK_occupied
+                        enemy_piece = WHITE_occupied
+                    else:
+                        current_piece = WHITE_occupied
+                        enemy_piece = BLACK_occupied
+                    no_move_turns = 0
+    for n in range(0, len(BLACK_occupied)): #draws BLACK pieces
+        pygame.draw.circle(screen, BLACK, ((BLACK_occupied[n][0] + 32), BLACK_occupied[n][1] + 32), 25 )
+    for n in range(0, len(WHITE_occupied)): #draws WHITE pieces
+        pygame.draw.circle(screen, WHITE, ((WHITE_occupied[n][0] + 32), WHITE_occupied[n][1] + 32), 25 )
     pygame.display.update() #UPDATE DRAW FUNCTION
