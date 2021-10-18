@@ -155,11 +155,14 @@ def move_total_score(position):
 def play_best_move(move_options):
     move_score = 0
     move_pos = (0, 0)
-    for i, j in move_options:
+    for i, j in move_options.items():
         if j > move_score:
+            print(move_score)
+            print(j)
+            print(i)
             move_score = j
             move_pos = i
-    return i
+    return move_pos
 
 def flip(position, adjacent):
     """finds the furthest position on grid up to which the player has captured enemy pieces"""
@@ -233,24 +236,39 @@ while True:
             if event.key == pygame.K_e:
                 print('button pressed')
                 highest_scoring_move()
-        if event.type==pygame.MOUSEBUTTONDOWN:
-            if event.button == 3: # right click
-                mouse_pos = pygame.mouse.get_pos()
-                tile_pos = pos_to_tile(mouse_pos)
-                print(move_total_score(tile_pos))
-            elif event.button == 1:
-                mouse_pos = pygame.mouse.get_pos()
-                tile_pos = pos_to_tile(mouse_pos)
-                if check_valid(tile_pos) == True:
-                    current_piece.append(tile_pos)
-                    turn += 1
-                    if turn % 2 == 1:
-                        current_piece = BLACK_occupied
-                        enemy_piece = WHITE_occupied
-                    else:
-                        current_piece = WHITE_occupied
-                        enemy_piece = BLACK_occupied
+        if turn % 2 == 1:
+            if event.type==pygame.MOUSEBUTTONDOWN:
+                if event.button == 3: # right click
+                    mouse_pos = pygame.mouse.get_pos()
+                    tile_pos = pos_to_tile(mouse_pos)
+                    print(move_total_score(tile_pos))
+                elif event.button == 1:
+                    mouse_pos = pygame.mouse.get_pos()
+                    tile_pos = pos_to_tile(mouse_pos)
+                    if check_valid(tile_pos) == True:
+                        current_piece.append(tile_pos)
+                        turn += 1
+                        if turn % 2 == 1:
+                            current_piece = BLACK_occupied
+                            enemy_piece = WHITE_occupied
+                        else:
+                            current_piece = WHITE_occupied
+                            enemy_piece = BLACK_occupied
+                        no_move_turns = 0
+        else:
+            white_turn = play_best_move(highest_scoring_move())
+            print(f"white_turn is {white_turn}")
+            if check_valid(white_turn) == True:
+                current_piece.append(white_turn)
+                turn += 1
+                if turn % 2 == 1:
+                    current_piece = BLACK_occupied
+                    enemy_piece = WHITE_occupied
+                else:
+                    current_piece = WHITE_occupied
+                    enemy_piece = BLACK_occupied
                     no_move_turns = 0
+
     for n in range(0, len(BLACK_occupied)): #draws BLACK pieces
         pygame.draw.circle(screen, BLACK, ((BLACK_occupied[n][0] + 32), BLACK_occupied[n][1] + 32), 25 )
     for n in range(0, len(WHITE_occupied)): #draws WHITE pieces
