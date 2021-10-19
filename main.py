@@ -44,8 +44,8 @@ def pos_to_tile(pos):
 
 def basic_coords(pos):
     """returns coordinates based on reversi board grid rather than pixel coordinates"""
-    x = pos[0]/tile_size
-    y = pos[1]/tile_size
+    x = pos[0]//tile_size
+    y = pos[1]//tile_size
     return (x, y)
 
 def valid_moves_available():
@@ -157,9 +157,9 @@ def play_best_move(move_options):
     move_pos = (0, 0)
     for i, j in move_options.items():
         if j > move_score:
-            print(move_score)
-            print(j)
-            print(i)
+            move_score = j
+            move_pos = i
+        elif j == move_score:
             move_score = j
             move_pos = i
     return move_pos
@@ -195,6 +195,13 @@ def result():
     else:
         print('it\'s a draw')
 
+def log_move(move):
+    move_log.append(basic_coords(move))
+    pass
+
+def view_move_log():
+    return move_log
+
 #initialise pygame module
 pygame.init()
 screen=pygame.display.set_mode((8*tile_size,8*tile_size))
@@ -208,6 +215,7 @@ BLACK_occupied = [ ]
 WHITE_occupied = [ ]
 current_piece = BLACK_occupied
 enemy_piece = WHITE_occupied
+move_log = [ ]
 #starting positions
 for n in range(0, 4):
     if n < 2:
@@ -246,6 +254,7 @@ while True:
                     mouse_pos = pygame.mouse.get_pos()
                     tile_pos = pos_to_tile(mouse_pos)
                     if check_valid(tile_pos) == True:
+                        log_move(tile_pos)
                         current_piece.append(tile_pos)
                         turn += 1
                         if turn % 2 == 1:
@@ -260,6 +269,7 @@ while True:
             print(f"white_turn is {white_turn}")
             if check_valid(white_turn) == True:
                 current_piece.append(white_turn)
+                log_move(white_turn)
                 turn += 1
                 if turn % 2 == 1:
                     current_piece = BLACK_occupied
