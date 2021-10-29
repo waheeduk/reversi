@@ -178,7 +178,7 @@ def minimax(current_depth, target_depth, maximise, move, score):
             if eval[1] > maxEval:
                 maxEval = eval[1]
                 pos = eval[0]
-        return maxEval, pos
+        return pos, maxEval
     if maximise == False:
         minEval = 64
         pos = (0, 0)
@@ -188,7 +188,7 @@ def minimax(current_depth, target_depth, maximise, move, score):
             if eval[1] < minEval:
                 minEval = eval[1]
                 pos = eval[0]
-        return minEval, pos
+        return pos, minEval
 
 def flip(position, adjacent):
     """finds the furthest position on grid up to which the player has captured enemy pieces"""
@@ -242,13 +242,13 @@ WHITE_occupied = [ ]
 current_piece = BLACK_occupied
 enemy_piece = WHITE_occupied
 move_log = [ ]
-WHITE_occupied.append((192, 128))
+# WHITE_occupied.append((192, 128))
 #starting positions
-# for n in range(0, 4):
-#     if n < 2:
-#         BLACK_occupied.append(starting_pos[n])
-#     else:
-#         WHITE_occupied.append(starting_pos[n])
+for n in range(0, 4):
+    if n < 2:
+        BLACK_occupied.append(starting_pos[n])
+    else:
+        WHITE_occupied.append(starting_pos[n])
 #draws the grid onto which the game is played
 for n in range(0, 8):
     pygame.draw.line(screen, BLACK, (n*tile_size, 0), (n*tile_size, tile_size*8))
@@ -292,11 +292,11 @@ while True:
                             enemy_piece = BLACK_occupied
                         no_move_turns = 0
         else:
-            white_turn = minimax(0, 1, True, 0, 0)
+            white_turn = minimax(0, 2, False, 0, 0)
             print(f"white_turn is {white_turn}")
-            print(f'white turn pos is {white_turn[1]}')
-            if check_valid(white_turn[1]) == True:
-                current_piece.append(white_turn[1])
+            print(f'white turn pos is {white_turn[0]}')
+            if check_valid(white_turn[0]) == True:
+                current_piece.append(white_turn[0])
                 # log_move(white_turn)
                 turn += 1
                 if turn % 2 == 1:
@@ -310,6 +310,5 @@ while True:
     for n in range(0, len(BLACK_occupied)): #draws BLACK pieces
         pygame.draw.circle(screen, BLACK, ((BLACK_occupied[n][0] + 32), BLACK_occupied[n][1] + 32), 25 )
     for n in range(0, len(WHITE_occupied)): #draws WHITE pieces
-        print(f'white occupied {n} is {WHITE_occupied[n]}')
         pygame.draw.circle(screen, WHITE, ((WHITE_occupied[n][0] + 32), WHITE_occupied[n][1] + 32), 25 )
     pygame.display.update() #UPDATE DRAW FUNCTION
